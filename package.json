@@ -28,7 +28,8 @@
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "test": "vitest",
-    "coverage": "vitest run --coverage"
+    "coverage": "vitest run --coverage",
+    "bench": "vitest bench"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^1.4.0",
