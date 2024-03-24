@@ -8,8 +8,8 @@ type OptionalKeys<T> = {
 
 type WithType<T extends Record<string, string>> = {
   base?: string;
-  variants?: ValueMap2<T>;
-  defaultVariants?: ModifyType2<T>;
+  variants?: ValueMap<T>;
+  defaultVariants?: ModifyType<T>;
   compoundVariants?: {
     variants: Partial<{
       [key in keyof T]: T[key][];
@@ -22,7 +22,7 @@ type WithoutType<D extends Record<string, Record<string, string>> | undefined> =
   {
     base?: string;
     variants?: D;
-    defaultVariants?: Partial<ValueMapWithoutType2<D>>;
+    defaultVariants?: Partial<ValueMapWithoutType<D>>;
     compoundVariants?: {
       variants: Partial<{
         [key in keyof D]: (keyof D[key])[];
@@ -31,14 +31,14 @@ type WithoutType<D extends Record<string, Record<string, string>> | undefined> =
     }[];
   };
 
-type ValueMap2<T extends Record<string, string>> = {
+type ValueMap<T extends Record<string, string>> = {
   [K in keyof T]: Record<T[K], string>;
 };
 
-type ModifyType2<T> = Partial<Pick<T, RequiredKeys<T>>> &
+type ModifyType<T> = Partial<Pick<T, RequiredKeys<T>>> &
   Required<Pick<T, OptionalKeys<T>>>;
 
-type ValueMapWithoutType2<
+type ValueMapWithoutType<
   T extends Record<string, Record<string, string>> | undefined
 > = {
   [K in keyof T]: keyof T[K];
@@ -53,19 +53,23 @@ function hasKey<T extends object>(obj: T, key: keyof any): key is keyof T {
   return key in obj;
 }
 
-function isSubset2(
+function isSubset(
   compoundVariant: Record<string, string[] | undefined>,
   variant: Record<string, string>,
   defaultVariant: Record<string, unknown> | undefined
 ): boolean {
+
   for (const key in compoundVariant) {
-    const value1 = compoundVariant[key];
-    if (value1 !== undefined) {
-      const value2 = variant[key];
-      if (value2 !== undefined && value1.includes(value2)) {
+    const compoundVariantValue = compoundVariant[key];
+    if (compoundVariantValue !== undefined) {
+      const variantValue = variant[key];
+      if (
+        variantValue !== undefined &&
+        compoundVariantValue.includes(variantValue)
+      ) {
         continue;
       } else if (
-        value2 === undefined &&
+        variantValue === undefined &&
         defaultVariant &&
         key in defaultVariant
       ) {
@@ -91,7 +95,7 @@ export const cvs = <
   return (
     args2: T extends Record<string, string>
       ? T
-      : Partial<ValueMapWithoutType2<D>>
+      : Partial<ValueMapWithoutType<D>>
   ): string => {
     const result: string[] = [];
 
@@ -137,19 +141,23 @@ export const cvs = <
     const compoundVariants = args1.compoundVariants;
 
     if (compoundVariants) {
-      for (const cur of compoundVariants) {
-        const variants = cur.variants as Partial<Record<string, string[]>>;
+      for (let index = 0; index < compoundVariants.length; index++) {
+        const cur = compoundVariants[index];
 
-        const value = cur.value;
+        if (cur) {
+          const variants = cur.variants as Partial<Record<string, string[]>>;
 
-        const isVariantSubset = isSubset2(
-          variants,
-          unsafeArgs2,
-          args1.defaultVariants
-        );
+          const value = cur.value;
 
-        if (isVariantSubset) {
-          result.push(value);
+          const isVariantSubset = isSubset(
+            variants,
+            unsafeArgs2,
+            args1.defaultVariants
+          );
+
+          if (isVariantSubset) {
+            result.push(value);
+          }
         }
       }
     }
